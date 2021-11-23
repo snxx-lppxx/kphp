@@ -27,6 +27,7 @@
 #include "compiler/function-pass.h"
 #include "compiler/inferring/public.h"
 #include "compiler/pipes/collect-forkable-types.h"
+#include "compiler/gentree.h"
 
 size_t CodeGenF::calc_count_of_parts(size_t cnt_global_vars) {
   return 1u + cnt_global_vars / G->settings().globals_split_count.get();
@@ -95,9 +96,13 @@ void CodeGenF::on_finish(DataStream<std::unique_ptr<CodeGenRootCmd>> &os) {
   std::vector<VarPtr> vars2 = vars;
   std::sort(vars2.begin(), vars2.end());
   printf("global vars count %d parts_cnt %d\n", (int)vars2.size(), (int)parts_cnt);
-  for (VarPtr var : vars2) {
-    printf("  global %s hash %ld part_id %d\n", var->name.c_str(), vk::std_hash(var->name), (int)(vk::std_hash(var->name) % parts_cnt));
-  }
+  for (VarPtr var : vars2)
+    if (vk::string_view{var->name}.starts_with("const_string$")) {
+      const std::string *str_val = GenTree::get_constexpr_string(var->init_val);
+      std::string cut = str_val == nullptr ? "NULL" : str_val->size() > 50 ? str_val->substr(0,47)+"..." : *str_val;
+      cut = replace_characters(cut, '\n', ' ');
+      printf("  %s len %d \"%s\"\n", var->name.c_str(), str_val == nullptr ? -1 : (int)str_val->size(), cut.c_str());
+    }
 
   std::vector<std::vector<VarPtr>> vars_batches(parts_cnt);
   std::vector<int> max_dep_levels(parts_cnt);
