@@ -91,6 +91,14 @@ void CodeGenF::on_finish(DataStream<std::unique_ptr<CodeGenRootCmd>> &os) {
   }
   size_t parts_cnt = calc_count_of_parts(vars.size());
 
+  // tmp
+  std::vector<VarPtr> vars2 = vars;
+  std::sort(vars2.begin(), vars2.end());
+  printf("global vars count %d parts_cnt %d\n", (int)vars2.size(), (int)parts_cnt);
+  for (VarPtr var : vars2) {
+    printf("  global %s hash %ld part_id %d\n", var->name.c_str(), vk::std_hash(var->name), (int)(vk::std_hash(var->name) % parts_cnt));
+  }
+
   std::vector<std::vector<VarPtr>> vars_batches(parts_cnt);
   std::vector<int> max_dep_levels(parts_cnt);
   for (VarPtr var : vars) {
