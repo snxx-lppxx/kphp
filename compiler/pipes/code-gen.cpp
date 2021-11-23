@@ -99,7 +99,7 @@ void CodeGenF::on_finish(DataStream<std::unique_ptr<CodeGenRootCmd>> &os) {
   for (VarPtr var : vars2)
     if (vk::string_view{var->name}.starts_with("const_string$")) {
       const std::string *str_val = GenTree::get_constexpr_string(var->init_val);
-      std::string cut = str_val == nullptr ? "NULL" : str_val->size() > 50 ? str_val->substr(0,47)+"..." : *str_val;
+      std::string cut = str_val == nullptr ? "NULL" : str_val->size() > 100 ? str_val->substr(0,97)+"..." : *str_val;
       cut = replace_characters(cut, '\n', ' ');
       printf("  %s len %d \"%s\"\n", var->name.c_str(), str_val == nullptr ? -1 : (int)str_val->size(), cut.c_str());
     }
