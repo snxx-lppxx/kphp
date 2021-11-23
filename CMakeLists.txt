@@ -82,8 +82,8 @@ install(FILES ${AUTO_DIR}/runtime/runtime-headers.h
         COMPONENT KPHP
         DESTINATION ${INSTALL_KPHP_SOURCE}/objs/generated/auto/runtime/)
 
-set(CPACK_DEBIAN_KPHP_PACKAGE_DEPENDS "vk-flex-data, curl-kphp-vk, libuber-h3, libpcre3-dev, libre2-dev, libyaml-cpp-dev, libssl-dev, zlib1g-dev, \
-                                       libzstd-dev, g++, libnghttp2-dev, libmsgpack-dev, kphp-timelib, libxgboost-vk")
+set(CPACK_DEBIAN_KPHP_PACKAGE_DEPENDS "vk-flex-data, curl-kphp-vk, libuber-h3, libpcre3-dev, libre2-dev, libyaml-cpp-dev, libssl-dev, zlib1g-dev,  \
+                                       libzstd-dev, g++, libnghttp2-dev, libmsgpack-dev, kphp-timelib, libxgboost-vk, libmysqlclient-dev")
 set(CPACK_DEBIAN_KPHP_PACKAGE_RECOMMENDS "php7.4-vkext, vk-tl-tools")
 set(CPACK_DEBIAN_KPHP_DESCRIPTION "kphp2cpp compiler and runtime for it")
 set(CPACK_DEBIAN_KPHP_PACKAGE_NAME "kphp")
