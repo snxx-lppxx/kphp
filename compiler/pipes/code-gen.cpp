@@ -96,13 +96,23 @@ void CodeGenF::on_finish(DataStream<std::unique_ptr<CodeGenRootCmd>> &os) {
   std::vector<VarPtr> vars2 = vars;
   std::sort(vars2.begin(), vars2.end());
   printf("global vars count %d parts_cnt %d\n", (int)vars2.size(), (int)parts_cnt);
-  for (VarPtr var : vars2)
+  for (VarPtr var : vars2) {
+    Location *l = var->init_val ? &var->init_val->location : nullptr;
+    std::string location_str;
+    if (l != nullptr && l->file && l->line > 0) {
+      vk::string_view comment = l->file->get_line(l->line);
+      location_str = " /in/ " + l->as_human_readable() + " // " + comment;
+    }
+
     if (vk::string_view{var->name}.starts_with("const_string$")) {
       const std::string *str_val = GenTree::get_constexpr_string(var->init_val);
-      std::string cut = str_val == nullptr ? "NULL" : str_val->size() > 100 ? str_val->substr(0,97)+"..." : *str_val;
+      std::string cut = str_val == nullptr ? "NULL" : str_val->size() > 100 ? str_val->substr(0, 97) + "..." : *str_val;
       cut = replace_characters(cut, '\n', ' ');
-      printf("  %s len %d \"%s\"\n", var->name.c_str(), str_val == nullptr ? -1 : (int)str_val->size(), cut.c_str());
+      printf("  %s len %d \"%s\" %s\n", var->name.c_str(), str_val == nullptr ? -1 : (int)str_val->size(), cut.c_str(), location_str.c_str());
+    } else {
+      printf("  %s %s\n", var->name.c_str(), location_str.c_str());
     }
+  }
 
   std::vector<std::vector<VarPtr>> vars_batches(parts_cnt);
   std::vector<int> max_dep_levels(parts_cnt);
