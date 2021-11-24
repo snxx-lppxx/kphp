@@ -55,6 +55,7 @@
 
 #include "runtime/interface.h"
 #include "server/job-workers/shared-memory-manager.h"
+#include "server/external-net-drivers/external-net-drivers.h"
 #include "runtime/profiler.h"
 #include "runtime/rpc.h"
 #include "runtime/xgboost/model.h"
@@ -1535,6 +1536,7 @@ static void generic_event_loop(WorkerType worker_type, bool init_and_listen_rpc_
 
     if (precise_now > next_create_outbound) {
       create_all_outbound_connections();
+      vk::singleton<ExternalNetDrivers>::get().create_outbound_connections();
       next_create_outbound = precise_now + 0.03 + 0.02 * drand48();
     }
 
