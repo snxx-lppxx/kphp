@@ -6,6 +6,7 @@
 
 #include "compiler/compiler-core.h"
 #include "compiler/data/class-data.h"
+#include "compiler/data/src-file.h"
 #include "compiler/data/var-data.h"
 #include "compiler/gentree.h"
 #include "compiler/name-gen.h"
@@ -191,6 +192,18 @@ VertexPtr RegisterVariablesPass::on_enter_vertex(VertexPtr root) {
         prop->var_id = m->var;
       } else {
         kphp_error(0, fmt_format("Invalid property access ...->{}: does not exist in class `{}`", root->get_string(), klass->get_name()));
+      }
+    }
+  } else if (root->type() == op_set) {
+    // get rid of $called - global variables for empty source files;
+    // namely, detect 'v$src_fooxxx$called = true' assign in such files and remove it,
+    // this allows to avoid further call of register_var() with such global variable
+    if (current_function->is_main_function() && current_function->body_seq == FunctionData::body_value::empty) {
+      auto set = root.as<op_set>();
+      auto lhs = set->lhs();
+      auto rhs = set->rhs();
+      if (rhs->type() == op_true && lhs->type() == op_var && lhs->get_string() == current_function->file_id->get_main_func_run_var_name()) {
+        return VertexAdaptor<op_empty>::create();
       }
     }
   }
