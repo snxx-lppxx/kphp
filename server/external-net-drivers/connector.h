@@ -4,33 +4,23 @@
 
 #pragma once
 
-#include "server/external-net-drivers/external-net-drivers.h"
-#include "net/net-events.h"
+#include "server/external-net-drivers/net-drivers-adaptor.h"
+
+class Request;
 
 class Connector : public ManagedThroughDlAllocator {
 public:
-  virtual void close() noexcept = 0;
   virtual int get_fd() const noexcept = 0;
+  virtual void handle_read() noexcept = 0;
+  virtual void handle_write() noexcept = 0;
+  virtual void push_async_request(int request_id, Request *req) noexcept = 0;
 
-  bool connected() const noexcept {
-    return is_connected;
-  }
+  virtual void close() noexcept = 0;
 
-  void connect_to_reactor_async() noexcept {
-    if (connected()) {
-      return;
-    }
-    is_connected = connect_async();
-    if (is_connected) {
-      int fd = get_fd();
-      epoll_insert(fd, EVT_WRITE | EVT_SPEC);
-      epoll_sethandler(fd, 0, ExternalNetDrivers::epoll_gateway, nullptr);
-    }
-  }
-
+  bool connected() const noexcept;
+  bool connect_async() noexcept;
 protected:
   bool is_connected{};
 
-private:
-  virtual bool connect_async() noexcept = 0;
+  virtual bool connect_async_impl() noexcept = 0;
 };

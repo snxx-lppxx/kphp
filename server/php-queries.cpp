@@ -14,6 +14,7 @@
 #include "runtime/allocator.h"
 #include "runtime/job-workers/processing-jobs.h"
 
+#include "server/external-net-drivers/net-drivers-adaptor.h"
 #include "server/job-workers/job-message.h"
 #include "server/php-engine-vars.h"
 #include "server/php-queries-stats.h"
@@ -707,15 +708,18 @@ sql_ansgen_t *sql_ansgen_packet_create() {
 /** new rpc interface **/
 static SlotIdsFactory rpc_ids_factory;
 SlotIdsFactory parallel_job_ids_factory;
+SlotIdsFactory external_db_requests_factory;
 
 static void init_slots() {
   rpc_ids_factory.init();
   parallel_job_ids_factory.init();
+  external_db_requests_factory.init();
 }
 
 static void clear_slots() {
   rpc_ids_factory.clear();
   parallel_job_ids_factory.clear();
+  external_db_requests_factory.clear();
 }
 
 template<class DataT, int N>
@@ -944,7 +948,7 @@ void db_run_query(int host_num, const char *request, int request_len, int timeou
 }
 
 slot_id_t rpc_send_query(int host_num, char *request, int request_size, int timeout_ms) {
-  net_query_t *query = create_net_query(nq_rpc_send);
+  net_query_t *query = create_net_query(net_query_type_t::rpc_send);
   if (query == nullptr) {
     return -1; // memory limit
   }
@@ -1104,6 +1108,10 @@ const char *net_event_t::get_description() const noexcept {
       } else {
         sprintf(BUF, "JOB ERROR");
       }
+      break;
+    }
+    case net_event_type_t::external_db_answer: {
+      sprintf(BUF, "EXTERNAL DB ANSWER");
       break;
     }
   }

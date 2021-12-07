@@ -23,7 +23,11 @@ prepend(KPHP_SERVER_SOURCES ${BASE_DIR}/server/
         slot-ids-factory.cpp
         workers-control.cpp
         php-queries-types.cpp
-        external-net-drivers/external-net-drivers.cpp
+        external-net-drivers/net-drivers-adaptor.cpp
+        external-net-drivers/connector.cpp
+        external-net-drivers/mysql/mysql-request.cpp
+        external-net-drivers/mysql/mysql-connector.cpp
+        external-net-drivers/mysql/mysql-response.cpp
         )
 
 prepend(KPHP_JOB_WORKERS_SOURCES ${BASE_DIR}/server/job-workers/

@@ -18,6 +18,8 @@
 #include "server/php-sql-connections.h"
 #include "server/php-worker.h"
 #include "server/server-stats.h"
+#include "server/external-net-drivers/connector.h"
+#include "server/external-net-drivers/request.h"
 
 php_worker *active_worker = nullptr;
 
@@ -228,8 +230,17 @@ void php_worker_run_net_queue(php_worker *worker __attribute__((unused))) {
   net_query_t *query;
   while ((query = pop_net_query()) != nullptr) {
     //no other types of query are currently supported
-    php_worker_run_rpc_send_query(query);
-    free_net_query(query);
+    switch (query->type) {
+      case net_query_type_t::rpc_send: {
+        php_worker_run_rpc_send_query(query);
+        free_net_query(query);
+        break;
+      }
+      case net_query_type_t::external_db_request: {
+        vk::singleton<NetDriversAdaptor>::get().process_external_db_request_net_query(query->slot_id, query->connector, query->external_db_request);
+        break;
+      }
+    }
   }
 }
 

@@ -54,13 +54,12 @@
 #include "net/net-tcp-rpc-server.h"
 
 #include "runtime/interface.h"
-#include "server/job-workers/shared-memory-manager.h"
-#include "server/external-net-drivers/external-net-drivers.h"
 #include "runtime/profiler.h"
 #include "runtime/rpc.h"
 #include "runtime/xgboost/model.h"
 #include "server/cluster-name.h"
 #include "server/confdata-binlog-replay.h"
+#include "server/external-net-drivers/net-drivers-adaptor.h"
 #include "server/job-workers/job-worker-client.h"
 #include "server/job-workers/job-worker-server.h"
 #include "server/job-workers/job-workers-context.h"
@@ -77,8 +76,8 @@
 #include "server/php-runner.h"
 #include "server/php-sql-connections.h"
 #include "server/php-worker.h"
-#include "server/server-stats.h"
 #include "server/server-log.h"
+#include "server/server-stats.h"
 #include "server/workers-control.h"
 
 using job_workers::JobWorkersContext;
@@ -248,8 +247,18 @@ connection dummy_request_queue;
 /** do write delayed write to connection **/
 
 
+#include <execinfo.h>
+void pprint_backtrace() {
+  void *buffer[64];
+  int nptrs = backtrace(buffer, 64);
+  write(2, "\n------- Stack Backtrace -------\n", 33);
+  backtrace_symbols_fd(buffer, nptrs, 2);
+  write(2, "-------------------------------\n", 32);
+}
 
 void command_net_write_run_rpc(command_t *base_command, void *data) {
+  fprintf(stderr, "@@@@@@@ command_net_write_run_rpc\n");
+  pprint_backtrace();
   auto *command = (command_net_write_t *)base_command;
 //  fprintf (stderr, "command_net_write [ptr=%p] [len = %d] [data = %p]\n", base_command, command->len, data);
 
@@ -1027,6 +1036,8 @@ int rpcx_execute(connection *c, int op, raw_message *raw) {
         return 0;
       }
 
+      fprintf(stderr, "@@@@@@@ Got answer from engine on c->fd = %d, c->wantrd = %d, c->wantwr = %d\n", c->fd, c->flags & C_WANTRD, c->flags & C_WANTWR);
+      pprint_backtrace();
       tl_fetch_init_raw_message(raw);
 
       auto op_from_tl = tl_fetch_int();
@@ -1316,6 +1327,7 @@ int rpcc_check_ready(connection *c) {
 }
 
 int rpcc_send_query(connection *c) {
+  fprintf(stderr, "@@@@@@@ rpcc_send_query: c->fd = %d\n", c->fd);
   //rpcc_ready
   c->last_query_sent_time = precise_now;
   c->last_response_time = precise_now;
@@ -1331,6 +1343,7 @@ int rpcc_send_query(connection *c) {
 //    fprintf (stderr, "processing delayed query %p for target %p initiated by %p (%d:%d<=%d)\n", q, c->target, q->requester, q->requester->fd, q->req_generation, q->requester->generation);
 
     auto command = (command_t *)q->extra;
+    fprintf(stderr, "@@@@@@@ command->run()\n");
     command->run(command, c);
     command->free(command);
     q->extra = nullptr;
@@ -1533,10 +1546,12 @@ static void generic_event_loop(WorkerType worker_type, bool init_and_listen_rpc_
     }
 
     epoll_work(57);
+    fprintf(stderr, "@@@@@@@ after epoll_work\n");
 
     if (precise_now > next_create_outbound) {
+      fprintf(stderr, "@@@@@@@ create_all_outbound_connections\n");
       create_all_outbound_connections();
-      vk::singleton<ExternalNetDrivers>::get().create_outbound_connections();
+      vk::singleton<NetDriversAdaptor>::get().create_outbound_connections();
       next_create_outbound = precise_now + 0.03 + 0.02 * drand48();
     }
 

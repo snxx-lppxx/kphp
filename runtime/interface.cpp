@@ -36,6 +36,7 @@
 #include "runtime/net_events.h"
 #include "runtime/on_kphp_warning_callback.h"
 #include "runtime/openssl.h"
+#include "runtime/pdo/pdo.h"
 #include "runtime/profiler.h"
 #include "runtime/regexp.h"
 #include "runtime/resumable.h"
@@ -48,6 +49,7 @@
 #include "runtime/zlib.h"
 #include "runtime/timelib_wrapper.h"
 #include "runtime/xgboost/model.h"
+#include "server/external-net-drivers/net-drivers-adaptor.h"
 #include "server/job-workers/job-message.h"
 #include "server/json-logger.h"
 #include "server/php-engine-vars.h"
@@ -2191,6 +2193,7 @@ static void init_runtime_libs() {
 
   init_string_buffer_lib(static_cast<int>(static_buffer_length_limit));
 
+  pdo::init_lib();
   init_interface_lib();
 
   php_assert (dl::in_critical_section == 0);
@@ -2235,6 +2238,8 @@ static void free_runtime_libs() {
   free_migration_php8();
 
   vk::singleton<JsonLogger>::get().reset_buffers();
+  pdo::free_lib();
+  vk::singleton<NetDriversAdaptor>::get().reset();
   free_interface_lib();
 }
 

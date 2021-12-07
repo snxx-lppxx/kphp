@@ -15,8 +15,9 @@ prepend(KPHP_RUNTIME_JOB_WORKERS_SOURCES job-workers/
 
 prepend(KPHP_RUNTIME_PDO_SOURCES pdo/
         pdo.cpp
-        abstract_pdo_driver.cpp
-        mysql/mysql_pdo_driver.cpp)
+        pdo_statement.cpp
+        mysql/mysql_pdo_driver.cpp
+        mysql/mysql_pdo_statement.cpp)
 
 prepend(KPHP_RUNTIME_SOURCES ${BASE_DIR}/runtime/
         ${KPHP_RUNTIME_MEMORY_RESOURCE_SOURCES}

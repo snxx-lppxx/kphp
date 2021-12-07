@@ -12,6 +12,7 @@
 #include "server/php-queries-types.h"
 
 extern SlotIdsFactory parallel_job_ids_factory;
+extern SlotIdsFactory external_db_requests_factory;
 
 namespace job_workers {
 struct FinishedJob;
@@ -22,7 +23,10 @@ enum class net_event_type_t {
   rpc_answer,
   rpc_error,
   job_worker_answer,
+  external_db_answer,
 };
+
+class Response;
 
 struct net_event_t {
   net_event_type_t type;
@@ -43,14 +47,21 @@ struct net_event_t {
     struct { // job_worker_answer
       job_workers::FinishedJob *job_result;
     };
+    struct { // external_db_answer
+      Response *response;
+    };
   };
 
   const char *get_description() const noexcept;
 };
 
-enum net_query_type_t {
-  nq_rpc_send
+enum class net_query_type_t {
+  rpc_send,
+  external_db_request,
 };
+
+class Connector;
+class Request;
 
 struct net_query_t {
   net_query_type_t type;
@@ -61,6 +72,10 @@ struct net_query_t {
       char *request;
       int request_size;
       int timeout_ms;
+    };
+    struct { // external_db_send
+      Connector *connector;
+      Request *external_db_request;
     };
   };
 };
@@ -276,6 +291,8 @@ struct net_send_ansgen_t {
 
 
 
+int alloc_net_event(slot_id_t slot_id, net_event_type_t type, net_event_t **res);
+void unalloc_net_event(net_event_t *event);
 
 net_query_t *pop_net_query();
 void free_net_query(net_query_t *query);
@@ -286,6 +303,7 @@ int create_rpc_answer_event(slot_id_t slot_id, int len, net_event_t **res);
 int create_job_worker_answer_event(job_workers::JobSharedMessage *job_result);
 
 int net_events_empty();
+net_query_t *create_net_query(net_query_type_t type);
 
 void php_queries_start();
 void php_queries_finish();

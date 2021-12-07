@@ -11,9 +11,10 @@ class PDO {
         ?string $username = null,
         ?string $password = null,
         ?array $options = null
-    );
+    ): PDO;
 
-    public function query(string $query, ?int $fetchMode = null): PDOStatement|false;
+    public function query(string $query, ?int $fetchMode = null): ?PDOStatement;
+    public function prepare(string $query, array $options = []): ?PDOStatement;
 
 //     These methods are not supported yet:
 //
@@ -26,7 +27,6 @@ class PDO {
 //     public function lastInsertId(?string $name = null): string|false;
 //     public function exec(string $statement): int|false;
 //     public static function getAvailableDrivers(): array;
-//     public function prepare(string $query, array $options = []): PDOStatement|false;
 //     public function quote(string $string, int $type = PDO::PARAM_STR): string|false;
 //     public function rollBack(): bool;
 //     public function setAttribute(int $attribute, mixed $value): bool;

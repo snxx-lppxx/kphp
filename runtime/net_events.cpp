@@ -9,6 +9,7 @@
 #include "runtime/allocator.h"
 #include "runtime/job-workers/job-interface.h"
 #include "runtime/rpc.h"
+#include "server/external-net-drivers/net-drivers-adaptor.h"
 #include "server/php-queries.h"
 
 int timeout_convert_to_ms(double timeout) {
@@ -48,6 +49,9 @@ static bool process_net_event(net_event_t *e) {
       break;
     case net_event_type_t::job_worker_answer:
       process_job_answer(e->slot_id, e->job_result);
+      break;
+    case net_event_type_t::external_db_answer:
+      vk::singleton<NetDriversAdaptor>::get().process_external_db_response_event(e->slot_id, e->response);
       break;
     default:
       php_critical_error ("unsupported net event %d", static_cast<int>(e->type));

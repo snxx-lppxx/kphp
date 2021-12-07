@@ -10,23 +10,16 @@
 #include "runtime/kphp_core.h"
 #include "runtime/memory_usage.h"
 #include "runtime/pdo/abstract_pdo_driver.h"
-#include "runtime/pdo/mysql/mysql_pdo_driver.h"
 #include "runtime/refcountable_php_classes.h"
 
 namespace pdo {
-  inline void init_pdo_lib() {
-
-  }
-
-  inline void free_pdo_lib() {
-
-  }
+  void init_lib();
+  void free_lib();
 } // namespace pdo
 
 
 struct C$PDO : public refcountable_polymorphic_php_classes<abstract_refcountable_php_interface> {
-  const pdo::AbstractPdoDriver *driver{nullptr};
-  int connection_id{};
+  pdo::AbstractPdoDriver *driver{nullptr}; // TODO: script memory leak, clean in destructor?
 
   virtual ~C$PDO() = default;
 
@@ -41,5 +34,13 @@ struct C$PDO : public refcountable_polymorphic_php_classes<abstract_refcountable
   virtual void accept(InstanceMemoryEstimateVisitor &) {}
 };
 
-class_instance<C$PDO> f$PDO$$__construct(class_instance<C$PDO> const &v$this, const string &$dsn, const Optional<string> &username = {},
+class_instance<C$PDO> f$PDO$$__construct(class_instance<C$PDO> const &v$this, const string &dsn, const Optional<string> &username = {},
                                                                 const Optional<string> &password = {}, const Optional<array<mixed>> &options= {}) noexcept;
+
+struct C$PDOStatement;
+
+class_instance<C$PDOStatement> f$PDO$$prepare(const class_instance<C$PDO> &v$this, const string &query, const array<mixed> &options = {}) noexcept;
+
+
+class_instance<C$PDOStatement> f$PDO$$query(const class_instance<C$PDO> &v$this, const string &query, Optional<int64_t> fetchMode = {});
+

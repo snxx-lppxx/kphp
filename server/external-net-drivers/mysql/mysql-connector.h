@@ -9,6 +9,8 @@
 #include "runtime/kphp_core.h"
 #include "server/external-net-drivers/connector.h"
 
+class Request;
+
 class MysqlConnector : public Connector {
 public:
   MYSQL *ctx{};
@@ -22,24 +24,10 @@ public:
     , db_name(std::move(db_name))
     , port(port) {}
 
-  bool connect_async() noexcept final {
-    if (is_connected) {
-      return true;
-    }
-    net_async_status status = mysql_real_connect_nonblocking(ctx, host.c_str(), user.c_str(), password.c_str(), db_name.c_str(), port, nullptr, 0);
-    return is_connected = (status == NET_ASYNC_COMPLETE);
-  }
+  void close() noexcept final;
+  int get_fd() const noexcept final;
 
-  void close() noexcept final {
-    mysql_close(ctx);
-  }
-
-  int get_fd() const noexcept final {
-    if (!is_connected) {
-      return -1;
-    }
-    return ctx->net.fd;
-  }
+  void push_async_request(int request_id, Request *req) noexcept final;
 
 private:
   string host{};
@@ -47,4 +35,11 @@ private:
   string password{};
   string db_name{};
   int port{};
+
+  Request *pending_request{nullptr};
+  int cur_request_id{-1};
+
+  bool connect_async_impl() noexcept final;
+  void handle_read() noexcept override;
+  void handle_write() noexcept override;
 };

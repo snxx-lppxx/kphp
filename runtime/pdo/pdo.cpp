@@ -6,19 +6,30 @@
 
 
 #include "runtime/pdo/pdo.h"
+#include "runtime/pdo/pdo_statement.h"
+#include "runtime/pdo/mysql/mysql_pdo.h"
+#include "runtime/pdo/mysql/mysql_pdo_driver.h"
 #include "runtime/array_functions.h"
 
-class_instance<C$PDO> f$PDO$$__construct(class_instance<C$PDO> const &v$this, const string &dsn,
+namespace pdo {
+void init_lib() {
+  mysql::init_lib();
+}
+void free_lib() {
+  mysql::free_lib();
+}
+} // namespace pdo
+
+
+class_instance<C$PDO> f$PDO$$__construct(const class_instance<C$PDO> &v$this, const string &dsn,
                                          const Optional<string> &username, const Optional<string> &password, const Optional<array<mixed>> &options) noexcept {
-  mysql_init(nullptr);
-  (void)username, (void)password; (void)options;
   array<string> dsn_parts = explode(':', dsn);
   php_assert(dsn_parts.count() == 2);
   const auto &driver_name = dsn_parts[0];
   const auto &connection_string = dsn_parts[1];
 
   if (driver_name == string{"mysql"}) {
-    v$this.get()->driver = &vk::singleton<pdo::mysql::MysqlPdoDriver>::get();
+    v$this.get()->driver = new pdo::mysql::MysqlPdoDriver{};
   } else {
     php_critical_error("Unknown PDO driver name: %s", driver_name.c_str());
   }
@@ -28,3 +39,16 @@ class_instance<C$PDO> f$PDO$$__construct(class_instance<C$PDO> const &v$this, co
   return v$this;
 }
 
+class_instance<C$PDOStatement> f$PDO$$prepare(const class_instance<C$PDO> &v$this, const string &query, const array<mixed> &options) noexcept {
+  return v$this.get()->driver->prepare(v$this, query, options);
+}
+
+class_instance<C$PDOStatement> f$PDO$$query(const class_instance<C$PDO> &v$this, const string &query, Optional<int64_t> fetchMode) {
+  (void)fetchMode;
+  class_instance<C$PDOStatement> statement = f$PDO$$prepare(v$this, query);
+  bool ok = f$PDOStatement$$execute(statement);
+  if (!ok) {
+    return {};
+  }
+  return statement;
+}

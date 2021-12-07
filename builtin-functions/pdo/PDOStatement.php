@@ -33,6 +33,9 @@ class PDOStatement {
     /** @kphp-extern-func-info resumable */
     public function fetch(int $mode = PDO::FETCH_DEFAULT, int $cursorOrientation = PDO::FETCH_ORI_NEXT, int $cursorOffset = 0): mixed;
 
+    /** @kphp-extern-func-info resumable */
+    public function execute(?array $params = null): bool;
+
 //     These methods are not supported yet:
 //
 //     public bindColumn(
@@ -55,7 +58,6 @@ class PDOStatement {
 //     public debugDumpParams(): ?bool
 //     public errorCode(): ?string
 //     public errorInfo(): array
-//     public execute(?array $params = null): bool
 //     public fetchAll(int $mode = PDO::FETCH_DEFAULT): array
 //     public fetchColumn(int $column = 0): mixed
 //     public fetchObject(?string $class = "stdClass", array $constructorArgs = []): object|false
